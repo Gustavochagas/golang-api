@@ -4,10 +4,9 @@ import (
 	"api/src/database"
 	"api/src/models"
 	"api/src/repositories"
+	"api/src/responses"
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -19,26 +18,32 @@ func SearchUsers(w http.ResponseWriter, r *http.Request) {
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	requestBody, erro := io.ReadAll(r.Body)
 	if erro != nil {
-		log.Fatal(erro)
+		responses.Erro(w, http.StatusUnprocessableEntity, erro)
+		return
 	}
 
 	var user models.User
 	if erro = json.Unmarshal(requestBody, &user); erro != nil {
-		log.Fatal(erro)
+		responses.Erro(w, http.StatusBadRequest, erro)
+		return
 	}
 
 	db, erro := database.Connect()
 	if erro != nil {
-		log.Fatal(erro)
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
 	}
+
+	defer db.Close()
 
 	repository := repositories.NewRepositoryForUser(db)
-	userID, erro := repository.Create(user)
+	user.ID, erro = repository.Create(user)
 	if erro != nil {
-		log.Fatal(erro)
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("Insert ID: %d", userID)))
+	responses.JSON(w, http.StatusCreated, user)
 }
 
 // Search user by
