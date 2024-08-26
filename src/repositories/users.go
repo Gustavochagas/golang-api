@@ -71,7 +71,7 @@ func (u users) Search(nameOrNick string) ([]models.User, error) {
 
 func (u users) SearchById(id uint64) (models.User, error) {
 	rows, erro := u.db.Query(
-		"select id, name, email, created_at from users where id = ?", id,
+		"select id, name, nick, email, created_at from users where id = ?", id,
 	)
 	if erro != nil {
 		return models.User{}, erro
@@ -84,6 +84,7 @@ func (u users) SearchById(id uint64) (models.User, error) {
 		if erro = rows.Scan(
 			&user.ID,
 			&user.Name,
+			&user.Nick,
 			&user.Email,
 			&user.CreatedAt,
 		); erro != nil {
@@ -92,4 +93,32 @@ func (u users) SearchById(id uint64) (models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (u users) Update(id uint64, user models.User) error {
+	statement, erro := u.db.Prepare("update users set name = ?, nick = ?, email = ? where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statement.Close()
+
+	if _, erro = statement.Exec(user.Name, user.Nick, user.Email, id); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+func (u users) Delete(id uint64) error {
+	statement, erro := u.db.Prepare("delete from users where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statement.Close()
+
+	if _, erro := statement.Exec(id); erro != nil {
+		return erro
+	}
+
+	return nil
 }
