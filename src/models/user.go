@@ -26,7 +26,7 @@ func (user *User) Prepare() error {
 
 func (user *User) validate() error {
 	if user.Name == "" {
-		return errors.New("ame is required")
+		return errors.New("Name is required")
 	}
 
 	if user.Nick == "" {
