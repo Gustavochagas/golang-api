@@ -122,3 +122,21 @@ func (u users) Delete(id uint64) error {
 
 	return nil
 }
+
+func (u users) SearchByEmail(email string) (models.User, error) {
+	row, erro := u.db.Query("select id, password from users where email  = ?", email)
+	if erro != nil {
+		return models.User{}, erro
+	}
+	defer row.Close()
+
+	var user models.User
+
+	if row.Next() {
+		if erro = row.Scan(&user.ID, &user.Password); erro != nil {
+			return models.User{}, erro
+		}
+	}
+
+	return user, nil
+}
