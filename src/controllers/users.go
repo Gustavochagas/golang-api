@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"api/src/authentication"
 	"api/src/database"
 	"api/src/models"
 	"api/src/repositories"
 	"api/src/responses"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
@@ -105,6 +107,17 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userIdFromToken, erro := authentication.ExtractUserId(r)
+	if erro != nil {
+		responses.Erro(w, http.StatusUnauthorized, erro)
+		return
+	}
+
+	if userId != userIdFromToken {
+		responses.Erro(w, http.StatusForbidden, errors.New("the user being modified is not the logged in one"))
+		return
+	}
+
 	bodyRequest, erro := io.ReadAll(r.Body)
 	if erro != nil {
 		responses.Erro(w, http.StatusUnprocessableEntity, erro)
@@ -146,6 +159,17 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	userId, erro := strconv.ParseUint(parameters["userId"], 10, 64)
 	if erro != nil {
 		responses.Erro(w, http.StatusBadRequest, erro)
+		return
+	}
+
+	userIdFromToken, erro := authentication.ExtractUserId(r)
+	if erro != nil {
+		responses.Erro(w, http.StatusUnauthorized, erro)
+		return
+	}
+
+	if userId != userIdFromToken {
+		responses.Erro(w, http.StatusForbidden, errors.New("the user being modified is not the logged in one"))
 		return
 	}
 
