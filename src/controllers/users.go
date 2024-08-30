@@ -261,3 +261,55 @@ func UnfollowUser(w http.ResponseWriter, r *http.Request) {
 
 	responses.JSON(w, http.StatusNoContent, nil)
 }
+
+func SearchFollowers(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	userId, erro := strconv.ParseUint(params["userId"], 10, 64)
+	if erro != nil {
+		responses.Erro(w, http.StatusBadRequest, erro)
+		return
+	}
+
+	db, erro := database.Connect()
+	if erro != nil {
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewRepositoryForUser(db)
+	followers, erro := repository.SearchFollowers(userId)
+	if erro != nil {
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+
+	responses.JSON(w, http.StatusOK, followers)
+}
+
+func SearchFollowing(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	userId, erro := strconv.ParseUint(params["userId"], 10, 64)
+	if erro != nil {
+		responses.Erro(w, http.StatusBadRequest, erro)
+		return
+	}
+
+	db, erro := database.Connect()
+	if erro != nil {
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewRepositoryForUser(db)
+	users, erro := repository.SearchFollowing(userId)
+	if erro != nil {
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+
+	responses.JSON(w, http.StatusOK, users)
+}

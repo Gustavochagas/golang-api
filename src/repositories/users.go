@@ -168,3 +168,61 @@ func (u users) Unfollow(userId, followerId uint64) error {
 
 	return nil
 }
+
+func (u users) SearchFollowers(userId uint64) ([]models.User, error) {
+	rows, erro := u.db.Query("select u.id, u.name, u.nick, u.email, u.created_at from users u inner join followers f on u.id = f.follower_id where f.user_id = ?", userId)
+
+	if erro != nil {
+		return nil, erro
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+
+		if erro = rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		); erro != nil {
+			return nil, erro
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (u users) SearchFollowing(userId uint64) ([]models.User, error) {
+	rows, erro := u.db.Query("select u.id, u.name, u.nick, u.email, u.created_at from users u inner join followers f on u.id = f.user_id where f.follower_id = ?", userId)
+
+	if erro != nil {
+		return nil, erro
+	}
+	defer rows.Close()
+
+	var users []models.User
+
+	for rows.Next() {
+		var user models.User
+
+		if erro = rows.Scan(
+			&user.ID,
+			&user.Name,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		); erro != nil {
+			return nil, erro
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
