@@ -151,7 +151,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responses.JSON(w, http.StatusNoContent, nil)
-
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -220,6 +219,42 @@ func FollowUser(w http.ResponseWriter, r *http.Request) {
 
 	repository := repositories.NewRepositoryForUser(db)
 	if erro = repository.Follow(userId, followerId); erro != nil {
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+
+	responses.JSON(w, http.StatusNoContent, nil)
+}
+
+func UnfollowUser(w http.ResponseWriter, r *http.Request) {
+	followerId, erro := authentication.ExtractUserId(r)
+	if erro != nil {
+		responses.Erro(w, http.StatusUnauthorized, erro)
+		return
+	}
+
+	params := mux.Vars(r)
+	userId, erro := strconv.ParseUint(params["userId"], 10, 64)
+	if erro != nil {
+		responses.Erro(w, http.StatusBadRequest, erro)
+		return
+	}
+
+	if followerId == userId {
+		responses.Erro(w, http.StatusForbidden, errors.New("not possible unfollow yourself"))
+		return
+	}
+
+	db, erro := database.Connect()
+	if erro != nil {
+		responses.Erro(w, http.StatusInternalServerError, erro)
+		return
+	}
+
+	defer db.Close()
+
+	repository := repositories.NewRepositoryForUser(db)
+	if erro = repository.Unfollow(userId, followerId); erro != nil {
 		responses.Erro(w, http.StatusInternalServerError, erro)
 		return
 	}
