@@ -61,10 +61,12 @@ func (repository Publications) SearchById(publicationId uint64) (models.Publicat
 
 func (repository Publications) Search(userId uint64) ([]models.Publication, error) {
 	rows, erro := repository.db.Query(`
-		select distinct p.*, u.nick from publications p 
-		inner join users u on u.id = p.author_id 
-		inner join followers f on p.author_id = f.user_id 
-		where u.id = ? or f.follow_id = ?`, userId, userId,
+			select distinct p.*, u.nick from publications p 
+			inner join users u on u.id = p.author_id 
+			inner join followers f on p.author_id = f.user_id 
+			where u.id = ? or f.follow_id = ?
+			order by 1 desc`,
+		userId, userId,
 	)
 	if erro != nil {
 		return nil, erro
@@ -92,4 +94,18 @@ func (repository Publications) Search(userId uint64) ([]models.Publication, erro
 	}
 
 	return publications, nil
+}
+
+func (repository Publications) Update(publicationId uint64, publication models.Publication) error {
+	statament, erro := repository.db.Prepare("update publications set title = ?, content = ? where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statament.Close()
+
+	if _, erro = statament.Exec(publication.Title, publication.Content, publicationId); erro != nil {
+		return erro
+	}
+
+	return nil
 }
