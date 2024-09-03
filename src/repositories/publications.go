@@ -123,3 +123,61 @@ func (repository Publications) Delete(publicationId uint64) error {
 
 	return nil
 }
+
+func (repository Publications) SearchByUser(userId uint64) ([]models.Publication, error) {
+	rows, erro := repository.db.Query("select p.*, u.nick from publications p join users u on u.id = p.author_id where p.author_id = ?", userId)
+	if erro != nil {
+		return nil, erro
+	}
+	defer rows.Close()
+
+	var publications []models.Publication
+
+	for rows.Next() {
+		var publication models.Publication
+
+		if erro = rows.Scan(
+			&publication.ID,
+			&publication.Title,
+			&publication.Content,
+			&publication.AuthorID,
+			&publication.Likes,
+			&publication.CreatedAt,
+			&publication.AuthorNick,
+		); erro != nil {
+			return nil, erro
+		}
+
+		publications = append(publications, publication)
+	}
+
+	return publications, nil
+}
+
+func (repository Publications) Like(publicationID uint64) error {
+	statament, erro := repository.db.Prepare("update publications set likes = likes + 1 where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statament.Close()
+
+	if _, erro = statament.Exec(publicationID); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+func (repository Publications) Unlike(publicationID uint64) error {
+	statament, erro := repository.db.Prepare("update publications set likes = CASE WHEN likes > 0 THEN likes - 1 ELSE likes END where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statament.Close()
+
+	if _, erro = statament.Exec(publicationID); erro != nil {
+		return erro
+	}
+
+	return nil
+}
