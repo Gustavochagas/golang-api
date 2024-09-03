@@ -109,3 +109,17 @@ func (repository Publications) Update(publicationId uint64, publication models.P
 
 	return nil
 }
+
+func (repository Publications) Delete(publicationId uint64) error {
+	statament, erro := repository.db.Prepare("delete from publications where id = ?")
+	if erro != nil {
+		return erro
+	}
+	defer statament.Close()
+
+	if _, erro = statament.Exec(publicationId); erro != nil {
+		return erro
+	}
+
+	return nil
+}
